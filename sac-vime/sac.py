@@ -10,7 +10,8 @@ import math
 from torch.utils.tensorboard import SummaryWriter
 from replay_buffer import replay_buffer
 from vime import vime
-
+import pickle
+import os
 
 class normallized_action_wrapper(gym.ActionWrapper):
     # * because the tanh value range is [-1, 1], so change the env action range
@@ -128,6 +129,8 @@ class sac_vime(object):
         self.count = 0
         self.train_count = 0
         self.writer = SummaryWriter('runs/sac_vime')
+        self.train_rewards = {}
+        self.train_steps = {}
 
     def soft_update(self):
         for param, target_param in zip(self.value_net1.parameters(), self.target_value_net1.parameters()):
@@ -205,6 +208,8 @@ class sac_vime(object):
         del self.vime_traj_buffer[:]
 
     def run(self):
+        print("run function called")
+        recent_rewards = deque(maxlen=10)
         for i in range(self.episode):
             obs = self.env.reset()
             total_reward = 0
@@ -239,8 +244,25 @@ class sac_vime(object):
                         self.weight_reward = total_reward
                     else:
                         self.weight_reward = self.weight_reward * 0.99 + total_reward * 0.01
+                    recent_rewards.append(total_reward)
+                    self.train_rewards[i] = total_reward
+                    self.train_steps[i] = self.count
+                    
                     if self.log:
                         self.writer.add_scalar('reward', total_reward, i + 1)
                         self.writer.add_scalar('weight_reward', self.weight_reward, i + 1)
-                    print('episode: {}  avg_reward: {:.2f}  weight_reward: {:.2f}'.format(i + 1, total_reward/self.count, self.weight_reward))
+                    if (i + 1) % 10 == 0:
+                        avg_reward = sum(recent_rewards) / len(recent_rewards)
+                        print(f'Episodes {i + 1 - 9} to {i + 1}: Average reward = {avg_reward:.2f}')
                     break
+        if self.vime_model is None:
+            model_dir = 'results/sac'
+        else:
+            model_dir = 'results/sac_vime'
+        pickle_file = model_dir + '/train_data.pkl'
+        with open(pickle_file, 'wb') as f:
+            pickle.dump({'train_rewards': self.train_rewards, 'train_steps': self.train_steps}, f)
+        
+        os.makedirs(model_dir, exist_ok=True)
+        torch.save(self.policy_net.state_dict(), os.path.join(model_dir, 'policy_net.pth'))
+
