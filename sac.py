@@ -259,10 +259,12 @@ class sac_vime(object):
             model_dir = 'results/sac'
         else:
             model_dir = 'results/sac_vime'
-        pickle_file = model_dir + '/train_data.pkl'
+        env_name = self.env.unwrapped.spec.id
+        pickle_file = model_dir + '/train_data_' + env_name + '.pkl'
         with open(pickle_file, 'wb') as f:
             pickle.dump({'train_rewards': self.train_rewards, 'train_steps': self.train_steps}, f)
         
         os.makedirs(model_dir, exist_ok=True)
-        torch.save(self.policy_net.state_dict(), os.path.join(model_dir, 'policy_net.pth'))
+        policy_file = 'policy_net_' + env_name + '.pth'
+        torch.save(self.policy_net.state_dict(), os.path.join(model_dir, policy_file))
 
