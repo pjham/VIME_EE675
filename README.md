@@ -12,6 +12,12 @@ pip install -r requirements.txt
 
 ## Execute
 
+To train models with VIME, keep `--vime 1` else make it `--vime 0`:
+
 ```
   python run.py --env Pendulum-v0 --buffer 100000 --n_epi 250 --vime 1
+```
+OR
+```
+python run.py --env MountainCarContinuous-v0 --buffer 100000 --n_epi 250 --vime 1
 ```
