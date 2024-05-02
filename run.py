@@ -13,6 +13,7 @@ if __name__ == '__main__':
     argparser.add_argument('-m', '--max', type=int, default=500, help='Max number of steps (default: 500).')
     argparser.add_argument('-v', '--vime', type=int, default=1, help='Number of experiments (default: 20).')
     argparser.add_argument('-p', '--n_epi', type=int, default=10000, help='Number of episodes (default: 10000).')
+    argparser.add_argument('-l', '--lr', type=float, default=1e-3, help='Learning rate (default: 1e-3).')
     arg = argparser.parse_args()
 
     env = normallized_action_wrapper(gym.make(arg.env))
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     test = sac_vime(
         env=env,
         batch_size=100,
-        learning_rate=1e-3,
+        learning_rate=arg.lr,
         exploration=1,
         episode=arg.n_epi,
         gamma=arg.discount,
